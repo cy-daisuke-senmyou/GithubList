@@ -143,7 +143,6 @@ class GithubApi {
 
 		// さっきリクエストしたURLと、Linkヘッダ（rel="last"）のURLが異なっていたら再帰的呼び出し
 		$link = $this->getLink($url);
-		print_r($link);
 		if($link !== false && !empty($link['last']) && $url != $link['last']) {
 			$this->getRepos($link['next']);
 		}
@@ -170,7 +169,6 @@ class GithubApi {
 
 		// さっきリクエストしたURLと、Linkヘッダ（rel="last"）のURLが異なっていたら再帰的呼び出し
 		$link = $this->getLink($url);
-		print_r($link);
 		if($link !== false && !empty($link['last']) && $url != $link['last']) {
 			$this->getTeams($link['next']);
 		}
@@ -215,7 +213,6 @@ class GithubApi {
 
 		// さっきリクエストしたURLと、Linkヘッダ（rel="last"）のURLが異なっていたら再帰的呼び出し
 		$link = $this->getLink($url);
-		print_r($link);
 		if($link !== false && !empty($link['last']) && $url != $link['last']) {
 			$this->getMembersByTeam($link['next'], $team);
 		}
