@@ -15,7 +15,7 @@ if (($fp = fopen("../data/repo.tsv", "r")) !== false) {
 // Team × Member
 $members = array();
 if (($fp = fopen("../data/member.tsv", "r")) !== false) {
-  while(($line = fgetcsv($fp, 1000, "\t")) !== false) {
+  while(($line = fgetcsv($fp, 0, "\t")) !== false) {
     $members[$line[0]] = $line[1];
   }
   fclose($fp);
