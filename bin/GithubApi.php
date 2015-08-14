@@ -28,9 +28,10 @@ class GithubApi {
 	const HTTP_BODY  = '0';
 	const HTTP_HEAD  = '1';
 	const USER_AGENT = 'CY_GithubApi';
+	// 白河DC移管に伴い不要になった。
 	const PROXY      = 'proxy.sf.cybird.ne.jp:8080';
 	// APIではデフォルト30レコードしか応答しない。
-	// per_page パラメーターで100までは増やせるが、もっと
+	// per_page パラメーターで100までは増やせるが、どうせ複数回問い合わせなければいけない。
 	const URL_REPOS   = 'https://api.github.com/orgs/CYBIRD/repos';
 	const URL_TEAMS   = 'https://api.github.com/orgs/CYBIRD/teams';
 	const URL_MEMBERS = 'https://api.github.com/teams/%s/members';
@@ -56,7 +57,7 @@ class GithubApi {
 		$this->curlOptionBody = array(
 									'--user'       => $this->accessKey . ':x-oauth-basic',
 									'--user-agent' => self::USER_AGENT,
-									'--proxy'      => self::PROXY,
+									//'--proxy'      => self::PROXY,
 									'--get'        => '',
 									'--silent'     => '',
 									'--show-error' => '',
@@ -64,7 +65,7 @@ class GithubApi {
 		$this->curlOptionHead = array(
 									'--user'       => $this->accessKey . ':x-oauth-basic',
 									'--user-agent' => self::USER_AGENT,
-									'--proxy'      => self::PROXY,
+									//'--proxy'      => self::PROXY,
 									'--head'        => '',
 									'--silent'     => '',
 								);
