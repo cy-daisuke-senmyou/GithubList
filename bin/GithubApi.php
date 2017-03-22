@@ -1,5 +1,7 @@
 <?php
 
+require_once("Mail.php");
+
 // 引数チェック
 $opts = "f:";  // 値が必須
 $options = getopt($opts);
@@ -11,10 +13,12 @@ if(empty($options)){
 
 // 実行
 $githubApi = new GithubApi();
+
 if( $githubApi->getRepos()   &&
     $githubApi->getTeams()   &&
     $githubApi->getMembers() &&
-    $githubApi->output()     ) {
+    $githubApi->output()     &&
+	$githubApi->alertPublicRepo() ) {
 		print('Success.');
 		exit(0);
 } else {
@@ -28,8 +32,9 @@ class GithubApi {
 	const HTTP_BODY  = '0';
 	const HTTP_HEAD  = '1';
 	const USER_AGENT = 'CY_GithubApi';
-	// 白河DC移管に伴い不要になった。
-	const PROXY      = 'proxy.sf.cybird.ne.jp:8080';
+	// Publicリポジトリが検出された際のアラート先。カンマ区切り。
+	const ALERT_TO   = 'daisuke_senmyou@cybird.co.jp, yuku_suwa@cybird.co.jp, hiroshi_takemoto@cybird.co.jp';
+	
 	// APIではデフォルト30レコードしか応答しない。
 	// per_page パラメーターで100までは増やせるが、どうせ複数回問い合わせなければいけない。
 	const URL_REPOS   = 'https://api.github.com/orgs/CYBIRD/repos';
@@ -57,7 +62,6 @@ class GithubApi {
 		$this->curlOptionBody = array(
 									'--user'       => $this->accessKey . ':x-oauth-basic',
 									'--user-agent' => self::USER_AGENT,
-									//'--proxy'      => self::PROXY,
 									'--get'        => '',
 									'--silent'     => '',
 									'--show-error' => '',
@@ -65,7 +69,6 @@ class GithubApi {
 		$this->curlOptionHead = array(
 									'--user'       => $this->accessKey . ':x-oauth-basic',
 									'--user-agent' => self::USER_AGENT,
-									//'--proxy'      => self::PROXY,
 									'--head'        => '',
 									'--silent'     => '',
 								);
@@ -138,7 +141,7 @@ class GithubApi {
 		$result = preg_replace("/\r\n|\r|\n/", '', $result);
 		$jsonRepos = json_decode($result);
 		foreach($jsonRepos as $repo) {
-			$this->repos[$repo->name] = $repo->description;
+			$this->repos[$repo->name] = array("desc" => $repo->description, "private" => (boolean)$repo->private);
 		}
 		ksort($this->repos);
 
@@ -221,12 +224,61 @@ class GithubApi {
 		return true;
 	}
 
+	// Puclicリポジトリがあればアラート発報する。
+	function alertPublicRepo() {
+		$publicRepos = array();
+		foreach($this->repos as $name => $data) {
+			if($data['private'] === false) {
+				$publicRepos[] = $name;
+			}
+		}
+		
+		// メール送信
+		if(!empty($publicRepos)) {
+			$mailto_array = explode(',', self::ALERT_TO);
+			$mail_subject = "GitHubにPublicなリポジトリが作成されました。";
+			$mail_body    = "GitHubにPublicなリポジトリが作成されました。" . PHP_EOL;
+			foreach($publicRepos as $publicRepo) {
+				$mail_body .= "リポジトリ名：$publicRepo" . PHP_EOL;
+			}
+			$this->mail_send($mailto_array, $mail_subject, $mail_body);
+		}
+		
+		return true;
+	}
+	
+	// メール送信
+	function mail_send($mailto_array, $mail_subject, $mail_body) {
+		// これを指定しないとmb_encode_mimeheader()で正しくエンコードされない
+		mb_language('ja');
+		mb_internal_encoding('ISO-2022-JP');
+		$params = array(
+			//"host" => "mail.sf.cybird.ne.jp",
+			"host" => "libml3.sf.cybird.ne.jp",
+			"port" => 25,
+			"auth" => false,
+			"username" => "",
+			"password" => ""
+		);
+		$mailObject = Mail::factory("smtp", $params);
+		$headers = array(
+			"From" => "noreply@cybird.ne.jp",
+			"To" => implode(',', $mailto_array),
+			"Subject" => mb_encode_mimeheader(mb_convert_encoding($mail_subject, 'ISO-2022-JP', "SJIS"))
+		);
+		$mail_body = mb_convert_kana($mail_body, "K", "SJIS");
+		$mail_body = mb_convert_encoding($mail_body, "ISO-2022-JP", "SJIS");
+		$mailObject->send($mailto_array, $headers, $mail_body);
+		// 元に戻す
+		mb_internal_encoding('SJIS');
+	}
+
 	// ファイル出力
 	function output() {
 		// リポジトリ取得結果をファイルに出力
 		$fp = @fopen(self::OUTPUT_REPOS, "w");
-		foreach($this->repos as $name => $desc) {
-			fwrite($fp, $name . "\t" . $desc . "\n");
+		foreach($this->repos as $name => $data) {
+			fwrite($fp, $name . "\t" . $data['desc'] . "\n");
 		}
 		fclose($fp);
 
