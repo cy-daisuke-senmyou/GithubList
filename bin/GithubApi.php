@@ -33,7 +33,7 @@ class GithubApi {
 	const HTTP_HEAD  = '1';
 	const USER_AGENT = 'CY_GithubApi';
 	// Publicリポジトリが検出された際のアラート先。カンマ区切り。
-	const ALERT_TO   = 'daisuke_senmyou@cybird.co.jp, yuku_suwa@cybird.co.jp, hiroshi_takemoto@cybird.co.jp';
+	const ALERT_TO   = 'daisuke_senmyou@cybird.co.jp, yuku_suwa@cybird.co.jp, hiroshi_takemoto@cybird.co.jp, katsuhiro_miura@cybird.co.jp, 	kenta_takahashi@cybird.co.jp';
 	
 	// APIではデフォルト30レコードしか応答しない。
 	// per_page パラメーターで100までは増やせるが、どうせ複数回問い合わせなければいけない。
